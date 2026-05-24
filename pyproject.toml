@@ -12,7 +12,10 @@ dependencies = [
     "optuna>=4.6.0",
     "pandas>=2.3.3",
     "prefect>=3.4.25",
+    "pyarrow>=21.0.0",
+    "ratelimit>=2.2.1",
     "requests>=2.32.5",
     "scikit-learn>=1.6.1",
     "seaborn>=0.13.2",
+    "sqlite-vec>=0.1.9",
 ]

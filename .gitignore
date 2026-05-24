@@ -9,6 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
+.DS_Store
 data/**/*.json
 *.csv
 .env
+etl/artifacts/*
