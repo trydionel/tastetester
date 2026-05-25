@@ -61,7 +61,7 @@ def build_df_listens(spotify_data, lastfm_data):
   df_lastfm = pd.DataFrame.from_dict(lastfm_data)
   df_listens = pd.concat([df_spotify, df_lastfm])
 
-  return df_listens
+  return df_listens.sample(n=250, random_state=42) # Smaller subset for testing
 
 @flow
 def construct_listens_history():

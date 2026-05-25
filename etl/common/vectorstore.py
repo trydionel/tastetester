@@ -54,33 +54,18 @@ class ListeningVectorStore:
         self.conn.commit()
 
     def _ensure_content_table(self, expected_dims):
-        existing = self.conn.execute(
-            "SELECT sql FROM sqlite_master WHERE type='virtual' AND name='track_content_vectors'"
-        ).fetchone()
-        if existing:
-            stored_dims = self._parse_vec_dim(existing[0])
-            if stored_dims and stored_dims != expected_dims:
-                self._drop_vec0_table()
-        self.conn.execute(
-            f"CREATE VIRTUAL TABLE IF NOT EXISTS track_content_vectors USING vec0("
-            f"  entity_key TEXT,"
-            f"  vector FLOAT[{expected_dims}]"
-            f")"
-        )
-        self.conn.commit()
-
-    def _drop_vec0_table(self):
         tables = self.conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'track_content_vectors%'"
         ).fetchall()
         for (t,) in tables:
             self.conn.execute(f'DROP TABLE IF EXISTS "{t}"')
-
-    @staticmethod
-    def _parse_vec_dim(type_str):
-        import re
-        m = re.search(r'FLOAT\[(\d+)\]', type_str)
-        return int(m.group(1)) if m else None
+        self.conn.execute(
+            f"CREATE VIRTUAL TABLE track_content_vectors USING vec0("
+            f"  entity_key TEXT,"
+            f"  vector FLOAT[{expected_dims}]"
+            f")"
+        )
+        self.conn.commit()
 
     # ------------------------------------------------------------------
     # Track details (denormalized metadata)

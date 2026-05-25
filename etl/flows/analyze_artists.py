@@ -23,7 +23,7 @@ def extract_artists(df_listens):
     peak_year=('ts', peak_year)
   ).reset_index()
 
-  return df_artists.sort_values(by="total_plays", ascending=False).head(10) # FIXME: smaller number just for initial dev
+  return df_artists
 
 @task(cache_policy=TASK_SOURCE + INPUTS, retries=3, retry_delay_seconds=[2, 5, 15])
 def fetch_genres(artist):

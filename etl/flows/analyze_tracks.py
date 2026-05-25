@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -27,7 +29,7 @@ def extract_tracks(df_listens):
     peak_year=('ts', peak_year)
   ).reset_index()
 
-  return df_tracks.sort_values(by='total_plays', ascending=False).head(50)
+  return df_tracks
 
 @limits(calls=1, period=1)
 def get_audio_features(ids):
@@ -120,6 +122,7 @@ def analyze_tracks(listens_parquet_path,
   df_to_parquet(df_tracks_enriched, parquet_path)
   create_link_artifact(link=parquet_path, key="tracks-analysis")
 
+  Path(db_path).unlink(missing_ok=True)
   with ListeningVectorStore(db_path) as store:
     store_track_content_vectors(df_tracks_enriched, store)
     store_track_details(df_tracks_enriched, store)
