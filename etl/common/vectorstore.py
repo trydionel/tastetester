@@ -7,7 +7,7 @@ import pandas as pd
 import sqlite_vec
 from sklearn.preprocessing import StandardScaler
 
-from etl.common.vector_schemas import LISTENING_DB
+from etl.common.vector_schemas import CONTENT_FEATURES, LISTENING_DB
 
 
 class ListeningVectorStore:
@@ -17,6 +17,7 @@ class ListeningVectorStore:
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.conn.enable_load_extension(True)
         sqlite_vec.load(self.conn)
+        self.conn.row_factory = sqlite3.Row
         self._ensure_tables()
 
     def _ensure_tables(self):
@@ -220,6 +221,25 @@ class ListeningVectorStore:
     def get_track_details_count(self):
         row = self.conn.execute("SELECT COUNT(*) FROM track_details").fetchone()
         return row[0]
+    
+    def build_track_vector(self, audio_features, genres):
+        row = self.conn.execute("SELECT feature_columns, scaler FROM vector_registry WHERE subspace = 'track_content'").fetchone()
+
+        feature_dimensions = json.loads(row[0])
+        numeric_features = CONTENT_FEATURES['numeric']
+        genre_features = list(set(feature_dimensions) - set(numeric_features))
+        scaler = pickle.loads(row[1])
+
+        # FIXME
+        DEFAULTS = { 'total_tracks': 10, 'release_date_year': 2020 }
+
+        audio_vector = scaler.transform([np.asarray([audio_features.get(key, DEFAULTS.get(key)) for key in numeric_features], dtype=float)])
+        genre_vector = [1 if genre_feature.replace(CONTENT_FEATURES['binary_prefix'], '') in genres else 0 for genre_feature in genre_features]
+
+        return np.concatenate([audio_vector[0], genre_vector])
+
+
+
 
     # ------------------------------------------------------------------
     # Lifecycle

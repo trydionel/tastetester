@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ $# -ne 1 ]; then
+  echo "Usage: $(basename "$0") <spotify-track-id>" >&2
+  echo "Example: $(basename "$0") 5tVKO8f1v0aTBuOllPxqX0" >&2
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+cd "$SCRIPT_DIR"
+uv run python -c "
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+import json
+from app.recommender import recommend
+
+results = recommend('$1')
+print(json.dumps(results, indent=2))
+"

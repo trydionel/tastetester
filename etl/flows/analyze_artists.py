@@ -9,11 +9,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from etl.common import root_path
 from etl.common.analysis import peak_year
 from etl.common.persistence import df_to_parquet, parquet_to_df
-
-@task
-def prep_musicbrainz():
-  mb.set_rate_limit()
-  mb.set_useragent('trydionel-ds-project', '0.0.1', 'jeff@trydionel.com')
+from etl.common.audio_features import fetch_genres as mb_fetch_genres
 
 @task()
 def extract_artists(df_listens):
@@ -31,21 +27,7 @@ def extract_artists(df_listens):
 
 @task(cache_policy=TASK_SOURCE + INPUTS, retries=3, retry_delay_seconds=[2, 5, 15])
 def fetch_genres(artist):
-  res = mb.search_artists(limit=1, artist=artist)
-  if len(res['artist-list']) == 0:
-    return []
-
-  recordings = res['artist-list'][0]
-
-  if int(recordings['ext:score']) < 95:
-    return []
-  
-  if 'tag-list' not in recordings:
-    return []
-
-  tag_list = recordings['tag-list']
-  sorted_tags = sorted(tag_list, key=lambda d: int(d['count']), reverse=True)
-  return [tag['name'] for tag in sorted_tags[:3]] # top 3 genres reported
+  mb_fetch_genres(artist)
 
 @task
 def enrich_with_genres(df_artists):
@@ -60,8 +42,6 @@ def enrich_with_genres(df_artists):
 
 @flow()
 def analyze_artists(listens_parquet_path):
-  prep_musicbrainz()
-
   df_listens = parquet_to_df(listens_parquet_path)
   df_artists = extract_artists(df_listens)
   df_artists_enriched = enrich_with_genres(df_artists)

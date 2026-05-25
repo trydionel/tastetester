@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import requests
 
 from ratelimit import limits
 from prefect import flow, task
@@ -12,6 +11,7 @@ from etl.common.analysis import peak_year
 from etl.common.persistence import df_to_parquet, parquet_to_df
 from etl.common.vector_schemas import CONTENT_FEATURES, TRACK_DETAILS_COLS
 from etl.common.vectorstore import ListeningVectorStore
+from etl.common.audio_features import fetch_audio_features
 
 @task
 def extract_tracks(df_listens):
@@ -31,14 +31,7 @@ def extract_tracks(df_listens):
 
 @limits(calls=1, period=1)
 def get_audio_features(ids):
-  if (len(ids) > 40):
-    raise ValueError(f"Cannot fetch audio features for more than 40 tracks. Given {len(ids)} ids.")
-
-  headers = {
-    'Accept': 'application/json'
-  }
-  res = requests.get("https://api.reccobeats.com/v1/audio-features", headers=headers, params={ "ids": ids })
-  return res.json()
+  return fetch_audio_features(ids)
 
 @task(cache_policy=TASK_SOURCE + INPUTS, retries=3, retry_delay_seconds=[2, 5, 15])
 def enrich_tracks(track_ids):
