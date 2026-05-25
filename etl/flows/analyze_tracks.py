@@ -92,7 +92,6 @@ def store_track_content_vectors(df_tracks_enriched, store):
     feature_cols=sc["numeric"] + genre_cols,
     binary_cols=genre_cols if genre_cols else None,
     entity_key_col=sc["entity_key"],
-    metadata_cols=sc["metadata"],
   )
 
 

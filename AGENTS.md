@@ -29,7 +29,7 @@ At the end of `analyze_tracks`, two things are written to `etl/artifacts/listeni
 
 | Table | Type | Contents |
 |---|---|---|
-| `track_content_vectors` | sqlite-vec vec0 | Content vectors (audio features + artist genre profile + album metadata). 35 dims currently. |
+| `track_content_vectors` | sqlite-vec vec0 | Content vectors (audio features + artist genre profile). 32 dims currently. |
 | `track_details` | regular SQLite | Denormalized row per track: identity, behavioral stats, audio features, genres (JSON array), album metadata. Supersedes former `track_behavior` table. |
 
 ### Query examples

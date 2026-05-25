@@ -4,15 +4,9 @@ CONTENT_FEATURES = {
     "numeric": [
         "danceability", "energy", "tempo", "acousticness", "valence",
         "instrumentalness", "liveness", "speechiness", "loudness",
-        "total_tracks", "release_date_year",
     ],
     "binary_prefix": "genre:",
     "entity_key": "spotify_track_uri",
-    "metadata": [
-        "master_metadata_track_name",
-        "master_metadata_album_artist_name",
-        "master_metadata_album_album_name",
-    ],
     "table": "track_content_vectors",
 }
 

@@ -55,25 +55,26 @@ class ListeningVectorStore:
 
     def _ensure_content_table(self, expected_dims):
         existing = self.conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='virtual' AND name='track_content_vectors'"
+            "SELECT sql FROM sqlite_master WHERE type='virtual' AND name='track_content_vectors'"
         ).fetchone()
         if existing:
-            info = self.conn.execute("PRAGMA table_info(track_content_vectors)").fetchall()
-            for col in info:
-                if col[1] == "vector":
-                    stored_dims = self._parse_vec_dim(col[2])
-                    if stored_dims and stored_dims != expected_dims:
-                        self.conn.execute("DROP TABLE IF EXISTS track_content_vectors")
-                        break
-                    break
+            stored_dims = self._parse_vec_dim(existing[0])
+            if stored_dims and stored_dims != expected_dims:
+                self._drop_vec0_table()
         self.conn.execute(
             f"CREATE VIRTUAL TABLE IF NOT EXISTS track_content_vectors USING vec0("
             f"  entity_key TEXT,"
-            f"  metadata_json TEXT,"
             f"  vector FLOAT[{expected_dims}]"
             f")"
         )
         self.conn.commit()
+
+    def _drop_vec0_table(self):
+        tables = self.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'track_content_vectors%'"
+        ).fetchall()
+        for (t,) in tables:
+            self.conn.execute(f'DROP TABLE IF EXISTS "{t}"')
 
     @staticmethod
     def _parse_vec_dim(type_str):
@@ -108,7 +109,7 @@ class ListeningVectorStore:
     # ------------------------------------------------------------------
 
     def store_content_vectors(self, df, feature_cols, entity_key_col,
-                              binary_cols=None, metadata_cols=None):
+                              binary_cols=None):
         available = set(df.columns)
         feature_cols = [c for c in feature_cols if c in available]
         dims = len(feature_cols)
@@ -129,22 +130,16 @@ class ListeningVectorStore:
                 vec = scaled_numerics
 
             key = r[entity_key_col]
-            meta = {}
-            if metadata_cols:
-                for c in metadata_cols:
-                    val = r.get(c)
-                    meta[c] = val if not (isinstance(val, float) and np.isnan(val)) else None
-
-            rows.append((key, json.dumps(meta), sqlite_vec.serialize_float32(vec.tolist())))
+            rows.append((key, sqlite_vec.serialize_float32(vec.tolist())))
 
         self.conn.execute("BEGIN TRANSACTION")
-        for key, meta, vec_bytes in rows:
+        for key, vec_bytes in rows:
             self.conn.execute(
                 "DELETE FROM track_content_vectors WHERE entity_key = ?", (key,)
             )
             self.conn.execute(
-                "INSERT INTO track_content_vectors(entity_key, metadata_json, vector) VALUES (?, ?, ?)",
-                (key, meta, vec_bytes),
+                "INSERT INTO track_content_vectors(entity_key, vector) VALUES (?, ?)",
+                (key, vec_bytes),
             )
         self.conn.commit()
 
@@ -191,14 +186,14 @@ class ListeningVectorStore:
             vector.tolist() if isinstance(vector, np.ndarray) else vector
         )
         rows = self.conn.execute(
-            "SELECT entity_key, metadata_json, distance "
+            "SELECT entity_key, distance "
             "FROM track_content_vectors "
             "WHERE vector MATCH ? "
             "ORDER BY distance "
             "LIMIT ?",
             (vec_bytes, limit),
         ).fetchall()
-        return [{"entity_key": r[0], "metadata": json.loads(r[1]), "distance": r[2]} for r in rows]
+        return [{"entity_key": r[0], "distance": r[1]} for r in rows]
 
     def get_vector_by_key(self, entity_key):
         row = self.conn.execute(
@@ -230,10 +225,7 @@ class ListeningVectorStore:
         genre_features = list(set(feature_dimensions) - set(numeric_features))
         scaler = pickle.loads(row[1])
 
-        # FIXME
-        DEFAULTS = { 'total_tracks': 10, 'release_date_year': 2020 }
-
-        audio_vector = scaler.transform([np.asarray([audio_features.get(key, DEFAULTS.get(key)) for key in numeric_features], dtype=float)])
+        audio_vector = scaler.transform([np.asarray([audio_features.get(key, 0) for key in numeric_features], dtype=float)])
         genre_vector = [1 if genre_feature.replace(CONTENT_FEATURES['binary_prefix'], '') in genres else 0 for genre_feature in genre_features]
 
         return np.concatenate([audio_vector[0], genre_vector])

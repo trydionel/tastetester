@@ -27,7 +27,8 @@ def extract_artists(df_listens):
 
 @task(cache_policy=TASK_SOURCE + INPUTS, retries=3, retry_delay_seconds=[2, 5, 15])
 def fetch_genres(artist):
-  mb_fetch_genres(artist)
+  genres = mb_fetch_genres(artist)
+  return genres if genres is not None else []
 
 @task
 def enrich_with_genres(df_artists):
