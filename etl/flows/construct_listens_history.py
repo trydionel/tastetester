@@ -61,7 +61,14 @@ def build_df_listens(spotify_data, lastfm_data):
   df_lastfm = pd.DataFrame.from_dict(lastfm_data)
   df_listens = pd.concat([df_spotify, df_lastfm])
 
-  return df_listens.sample(n=250, random_state=42) # Smaller subset for testing
+  local_run = True # FIXME: convert to variable
+  if local_run == True:
+    # Smaller subset for testing
+    df_artists = df_listens.groupby(by="master_metadata_album_artist_name").agg(plays=('ts','count')).reset_index()
+    sampled_artists = df_artists.sample(n=25, random_state=42, weights='plays')['master_metadata_album_artist_name'].to_numpy()
+    df_listens = df_listens[df_listens['master_metadata_album_artist_name'].isin(sampled_artists)]
+
+  return df_listens
 
 @flow
 def construct_listens_history():
