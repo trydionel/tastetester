@@ -162,9 +162,27 @@ class ListeningVectorStore:
             return float(v)
         return v
 
+            
+    def build_track_vector(self, audio_features, genres):
+        row = self.conn.execute("SELECT feature_columns, scaler FROM vector_registry WHERE subspace = 'track_content'").fetchone()
+
+        feature_dimensions = json.loads(row[0])
+        numeric_features = CONTENT_FEATURES['numeric']
+        genre_features = [c for c in feature_dimensions if c not in numeric_features]
+        scaler = pickle.loads(row[1])
+
+        audio_vector = scaler.transform([np.asarray([audio_features.get(key, 0) for key in numeric_features], dtype=float)])
+        genre_vector = [1 if genre_feature.replace(CONTENT_FEATURES['binary_prefix'], '') in genres else 0 for genre_feature in genre_features]
+
+        return np.concatenate([audio_vector[0], genre_vector]).astype(np.float32)
+
     # ------------------------------------------------------------------
     # Queries
     # ------------------------------------------------------------------
+
+    def feature_columns(self):
+        row = self.conn.execute("SELECT feature_columns FROM vector_registry WHERE subspace = 'track_content'").fetchone()
+        return json.loads(row[0])
 
     def similar_to_vector(self, vector, limit=10):
         vec_bytes = sqlite_vec.serialize_float32(
@@ -201,22 +219,9 @@ class ListeningVectorStore:
     def get_track_details_count(self):
         row = self.conn.execute("SELECT COUNT(*) FROM track_details").fetchone()
         return row[0]
-    
-    def build_track_vector(self, audio_features, genres):
-        row = self.conn.execute("SELECT feature_columns, scaler FROM vector_registry WHERE subspace = 'track_content'").fetchone()
 
-        feature_dimensions = json.loads(row[0])
-        numeric_features = CONTENT_FEATURES['numeric']
-        genre_features = list(set(feature_dimensions) - set(numeric_features))
-        scaler = pickle.loads(row[1])
-
-        audio_vector = scaler.transform([np.asarray([audio_features.get(key, 0) for key in numeric_features], dtype=float)])
-        genre_vector = [1 if genre_feature.replace(CONTENT_FEATURES['binary_prefix'], '') in genres else 0 for genre_feature in genre_features]
-
-        return np.concatenate([audio_vector[0], genre_vector])
-
-
-
+    def execute(self, query):
+        return self.conn.execute(query)
 
     # ------------------------------------------------------------------
     # Lifecycle

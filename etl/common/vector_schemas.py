@@ -1,4 +1,6 @@
-LISTENING_DB = "etl/artifacts/listening.db"
+from pathlib import Path
+
+LISTENING_DB = str(Path(__file__).joinpath("../../artifacts/listening.db").resolve())
 
 CONTENT_FEATURES = {
     "numeric": [
