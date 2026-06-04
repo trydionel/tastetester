@@ -20,6 +20,5 @@ dependencies = [
     "seaborn>=0.13.2",
     "sqlite-vec>=0.1.9",
     "statsmodels>=0.14.6",
-    "torch>=2.8.0",
     "xgboost>=2.1.4",
 ]
