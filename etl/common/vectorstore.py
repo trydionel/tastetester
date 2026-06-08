@@ -1,6 +1,13 @@
 import json
 import pickle
-import sqlite3
+
+try:
+    import sqlite3
+    # Test if the attribute exists
+    getattr(sqlite3.Connection, "enable_load_extension")
+except AttributeError:
+    # Fall back to sqlean which acts exactly like sqlite3
+    import sqlean as sqlite3
 
 import numpy as np
 import pandas as pd
@@ -219,6 +226,29 @@ class ListeningVectorStore:
     def get_track_details_count(self):
         row = self.conn.execute("SELECT COUNT(*) FROM track_details").fetchone()
         return row[0]
+
+    def get_tracks_dataframe(self):
+        tracks = self.store.execute("SELECT * FROM track_details").fetchall()
+        df_tracks = pd.DataFrame.from_records(tracks, columns=tracks[0].keys(), index="spotify_track_uri")
+        df_tracks['genres'] = df_tracks['genres'].apply(lambda x: json.loads(x) or [])
+        df_tracks['top_genre'] = df_tracks['genres'].apply(lambda x: x[0] if len(x) > 0 else None) # FIXME: This belongs in the ETL process
+
+        vectors = self.store.execute("SELECT entity_key, vec_to_json(vector) AS vector FROM track_content_vectors").fetchall()
+        keys = self.store.execute("SELECT feature_columns FROM vector_registry").fetchone()
+
+        def parse_row(row):
+            entity_key = row['entity_key']
+            vector = json.loads(row['vector'])
+
+            return [entity_key] + vector
+
+        columns = ['entity_key'] + json.loads(keys['feature_columns'])
+
+        df_vectors = pd.DataFrame.from_records(map(parse_row, vectors), columns=columns, index='entity_key')
+        df_vectors = df_vectors.dropna()
+        df_listens = df_tracks.join(df_vectors.filter(like=CONTENT_FEATURES['binary_prefix']), rsuffix="_").dropna()
+
+        return df_listens
 
     def execute(self, query):
         return self.conn.execute(query)
