@@ -228,13 +228,13 @@ class ListeningVectorStore:
         return row[0]
 
     def get_tracks_dataframe(self):
-        tracks = self.store.execute("SELECT * FROM track_details").fetchall()
+        tracks = self.execute("SELECT * FROM track_details").fetchall()
         df_tracks = pd.DataFrame.from_records(tracks, columns=tracks[0].keys(), index="spotify_track_uri")
         df_tracks['genres'] = df_tracks['genres'].apply(lambda x: json.loads(x) or [])
         df_tracks['top_genre'] = df_tracks['genres'].apply(lambda x: x[0] if len(x) > 0 else None) # FIXME: This belongs in the ETL process
 
-        vectors = self.store.execute("SELECT entity_key, vec_to_json(vector) AS vector FROM track_content_vectors").fetchall()
-        keys = self.store.execute("SELECT feature_columns FROM vector_registry").fetchone()
+        vectors = self.execute("SELECT entity_key, vec_to_json(vector) AS vector FROM track_content_vectors").fetchall()
+        keys = self.execute("SELECT feature_columns FROM vector_registry").fetchone()
 
         def parse_row(row):
             entity_key = row['entity_key']
