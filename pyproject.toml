@@ -14,6 +14,7 @@ dependencies = [
     "pandas>=2.3.3",
     "prefect>=3.4.25",
     "pyarrow>=21.0.0",
+    "pydantic>=2.12.5",
     "ratelimit>=2.2.1",
     "requests>=2.32.5",
     "scikit-learn>=1.6.1",
@@ -21,5 +22,6 @@ dependencies = [
     "sqlean-py>=3.50.4.5",
     "sqlite-vec>=0.1.9",
     "statsmodels>=0.14.6",
+    "streamlit>=1.50.0",
     "xgboost>=2.1.4",
 ]
