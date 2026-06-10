@@ -250,8 +250,18 @@ class ListeningVectorStore:
 
         return df_listens
 
-    def execute(self, query):
-        return self.conn.execute(query)
+    def total_plays_ecdf(self, n):
+        row = self.conn.execute("""
+              SELECT
+                SUM(CASE WHEN total_plays < :plays THEN 1 ELSE 0 END) AS less_played_tracks,
+                100.0 * SUM(CASE WHEN total_plays < :plays THEN 1 ELSE 0 END) / COUNT(*) AS percentage_less_played
+              FROM track_details
+              """, {"plays": n}).fetchone()
+        
+        return row['percentage_less_played']
+
+    def execute(self, query, params=None):
+        return self.conn.execute(query, params or ())
 
     # ------------------------------------------------------------------
     # Lifecycle

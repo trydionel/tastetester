@@ -12,7 +12,7 @@ from etl.common.vectorstore import ListeningVectorStore
 class Recommender():
   def __init__(self, random_state = None):
     self._store = ListeningVectorStore()
-    self._predicted_listens_model_path = Path(__file__).joinpath("../../etl/artifacts/predicted_listens_model.pkl").resolve()
+    self._predicted_listens_model_path = Path(__file__).joinpath("../../etl/artifacts/predicted_listens_model.ubj").resolve()
     self._random_state = random_state or 42
   
   def _predicted_listens_model(self):
@@ -94,13 +94,14 @@ class Recommender():
       match |= dict(match_details)
     
     analysis = { 
-      "details": dict(track_details),
+      "details": dict(track_details) | { 'genres': genres },
       "vector": vector,
       "matches": matches
     }
 
     analysis["expected_plays"] = self._predict_listens(analysis)
-    logging.debug(f"Expected number of plays for {analysis['details']['artists'][0]['name']} - {analysis['details']['trackTitle']}: {analysis['expected_plays']:.2f}")
+    analysis["percentile"] = self._store.total_plays_ecdf(analysis["expected_plays"])
+    logging.debug(f"Expected number of plays for {analysis['details']['artists'][0]['name']} - {analysis['details']['trackTitle']}: {analysis['expected_plays']:.2f} ({analysis['percentile']:.2f} percentile)")
 
     return analysis
 
@@ -109,4 +110,4 @@ class Recommender():
     input = pd.DataFrame.from_records([analysis['vector']], columns=self._store.feature_columns())
     expected_plays = model.predict(input)
 
-    return expected_plays[0]
+    return float(expected_plays[0])
