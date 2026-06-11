@@ -1,5 +1,0 @@
-project = "your-gcp-project-id"
-region = "us-central1"
-zone = "us-central1-a"
-training_bucket_name = "tastetester-training-bucket"
-repo_url = "https://github.com/trydionel/tastetester.git"
