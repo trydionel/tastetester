@@ -4,14 +4,6 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
-
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-include = ["app", "etl"]
-
 dependencies = [
     "dotenv>=0.9.9",
     "graphviz>=0.21",
@@ -35,3 +27,12 @@ dependencies = [
     "streamlit>=1.50.0",
     "xgboost>=2.1.4",
 ]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["app", "etl"]
+include = ["*"]
+exclude = ["plans", "notebooks"]

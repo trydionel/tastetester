@@ -11,7 +11,7 @@ resource "google_compute_instance" "vm" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-24-04-lts"
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
       size  = var.boot_disk_size_gb
     }
   }
@@ -34,19 +34,19 @@ resource "google_compute_instance" "vm" {
 
   metadata_startup_script = <<-EOT
     #!/bin/bash
-    set -euo pipefail
+    set -euxo pipefail
 
     apt-get update
     apt-get install -y git python3 python3-venv python3-pip curl
 
     cd /opt
     rm -rf tastetester
-    git clone "${var.repo_url}" tastetester
+    git clone --single-branch --branch terraform "${var.repo_url}" tastetester
     cd tastetester
 
     python3 -m venv /opt/tastetester-venv
-    /opt/tastetester-venv/bin/pip install --upgrade pip
-    /opt/tastetester-venv/bin/pip install -e .
+    /opt/tastetester-venv/bin/python -m pip install --upgrade pip setuptools wheel
+    /opt/tastetester-venv/bin/python -m pip install -e /opt/tastetester
 
     cat <<'EOF' > /etc/systemd/system/streamlit.service
     [Unit]

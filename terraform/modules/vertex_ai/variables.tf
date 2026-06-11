@@ -11,7 +11,7 @@ variable "endpoint_display_name" {
 }
 
 variable "endpoint_name" {
-  type = string
+  type    = string
   default = "tastetester-vertex-endpoint"
 }
 
