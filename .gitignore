@@ -14,3 +14,36 @@ data/**/*.json
 *.csv
 .env
 etl/artifacts/*
+
+# Local .terraform directory containing downloaded provider plugins
+.terraform/
+
+# Hide local development override setups
+.terraform.lock.hcl
+
+# Local state files containing current infrastructure layout
+*.tfstate
+*.tfstate.*
+
+# Crash logs and trace outputs
+crash.log
+crash.*.log
+
+# Override files (local developer configurations)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local CLI configuration files
+.terraformrc
+terraform.rc
+
+# Variable definition files containing secrets/passwords
+*.tfvars
+*.tfvars.json
+
+# Ignore credentials and local service account keys
+*.json
+!**/*manifest.json
+!**/*metadata.json

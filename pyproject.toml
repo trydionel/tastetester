@@ -4,8 +4,17 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app", "etl"]
+
 dependencies = [
     "dotenv>=0.9.9",
+    "graphviz>=0.21",
     "ipykernel>=6.31.0",
     "musicbrainzngs>=0.7.1",
     "numpy>=2.0.2",
@@ -17,6 +26,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "ratelimit>=2.2.1",
     "requests>=2.32.5",
+    "google-auth>=2.16.0",
     "scikit-learn>=1.6.1",
     "seaborn>=0.13.2",
     "sqlean-py>=3.50.4.5",

@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from typing import Any
 from pydantic import BaseModel
@@ -7,9 +8,17 @@ import xgboost as xgb
 import optuna
 import numpy as np
 import pandas as pd
+import requests
 
 from etl.common.audio_features import fetch_audio_features, fetch_genres, fetch_track_details
 from etl.common.vectorstore import ListeningVectorStore
+
+try:
+    import google.auth
+    from google.auth.transport.requests import Request as GoogleAuthRequest
+except ImportError:
+    google = None
+    GoogleAuthRequest = None
 
 class TrackAnalysis(BaseModel):
   details: dict[str, Any]
@@ -19,10 +28,11 @@ class TrackAnalysis(BaseModel):
   percentile: float
 
 class Recommender():
-  def __init__(self, random_state = None):
+  def __init__(self, random_state = None, vertex_ai_endpoint: str | None = None):
     self._store = ListeningVectorStore()
     self._predicted_listens_model_path = Path(__file__).joinpath("../../etl/artifacts/predicted_listens_model.ubj").resolve()
     self._random_state = random_state or 42
+    self._vertex_ai_endpoint = vertex_ai_endpoint or os.getenv("VERTEX_AI_ENDPOINT")
   
   def _predicted_listens_model(self):
     if self._predicted_listens_model_path.exists():
@@ -44,6 +54,7 @@ class Recommender():
         "max_depth": trial.suggest_int("max_depth", 6, 12),
         "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.1),
         "tree_method": trial.suggest_categorical("tree_method", ["exact", "approx", "hist"]),
+        "alpha": trial.suggest_float("alpha", 0.0, 1.0),
         "objective": "count:poisson",
         "eval_metric": "poisson-nloglik",
         "seed": self._random_state,
@@ -113,8 +124,45 @@ class Recommender():
     return TrackAnalysis(**analysis)
 
   def _predict_listens(self, analysis):
+    if self._vertex_ai_endpoint:
+      try:
+        return self._predict_with_vertex_ai(analysis['vector'])
+      except Exception as exc:
+        logging.warning("Vertex AI prediction failed, falling back to local model: %s", exc)
+
     model = self._predicted_listens_model()
-    input = pd.DataFrame.from_records([analysis['vector']], columns=self._store.feature_columns())
-    expected_plays = model.predict(input)
+    input_df = pd.DataFrame.from_records([analysis['vector']], columns=self._store.feature_columns())
+    expected_plays = model.predict(input_df)
 
     return float(expected_plays[0])
+
+  def _predict_with_vertex_ai(self, vector):
+    if google is None or GoogleAuthRequest is None:
+      raise RuntimeError("google-auth is required for Vertex AI prediction")
+
+    credentials, _ = google.auth.default()
+    if not credentials.valid:
+      credentials.refresh(GoogleAuthRequest())
+
+    if self._vertex_ai_endpoint.startswith("projects/"):
+      predict_url = f"https://{os.getenv('GOOGLE_CLOUD_REGION', 'us-central1')}-aiplatform.googleapis.com/v1/{self._vertex_ai_endpoint}:predict"
+    elif self._vertex_ai_endpoint.startswith("https://"):
+      predict_url = f"{self._vertex_ai_endpoint}:predict"
+    else:
+      predict_url = f"https://{os.getenv('GOOGLE_CLOUD_REGION', 'us-central1')}-aiplatform.googleapis.com/v1/{self._vertex_ai_endpoint}:predict"
+
+    response = requests.post(
+      predict_url,
+      headers={
+        "Authorization": f"Bearer {credentials.token}",
+        "Content-Type": "application/json",
+      },
+      json={"instances": [vector.tolist() if isinstance(vector, np.ndarray) else vector]},
+      timeout=30,
+    )
+    response.raise_for_status()
+    prediction = response.json()
+    if "predictions" not in prediction or not prediction["predictions"]:
+      raise RuntimeError(f"Unexpected Vertex AI response: {prediction}")
+
+    return float(prediction["predictions"][0][0])
