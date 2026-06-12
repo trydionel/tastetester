@@ -30,6 +30,10 @@ variable "streamlit_port" {
   type = number
 }
 
+variable "streamlit_allowed_sources" {
+  type = list(string)
+}
+
 variable "prefect_port" {
   type = number
 }
@@ -62,4 +66,8 @@ variable "network" {
 variable "instance_tag" {
   type = string
   default = "tastetester-vm"
+}
+
+variable "postgres_connection_string" {
+  type = string
 }

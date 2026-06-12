@@ -32,70 +32,14 @@ resource "google_compute_instance" "vm" {
     repo_url = var.repo_url
   }
 
-  metadata_startup_script = <<-EOT
-    #!/bin/bash
-    set -euxo pipefail
-
-    apt-get update
-    apt-get install -y git python3 python3-venv python3-pip curl
-
-    cd /opt
-    rm -rf tastetester
-    git clone --single-branch --branch terraform "${var.repo_url}" tastetester
-    cd tastetester
-
-    python3 -m venv /opt/tastetester-venv
-    /opt/tastetester-venv/bin/python -m pip install --upgrade pip setuptools wheel
-    /opt/tastetester-venv/bin/python -m pip install streamlit prefect
-    /opt/tastetester-venv/bin/python -m pip install -e /opt/tastetester
-
-    EXTERNAL_IP=$(curl -sfH "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip")
-    if [ -z "$EXTERNAL_IP" ]; then
-      echo "Unable to determine external IP from metadata server"
-      exit 1
-    fi
-
-    cat <<'EOF' > /etc/systemd/system/streamlit.service
-    [Unit]
-    Description=Streamlit app for tastetester
-    After=network.target
-
-    [Service]
-    Type=simple
-    User=root
-    WorkingDirectory=/opt/tastetester
-    ExecStart=/opt/tastetester-venv/bin/streamlit run /opt/tastetester/streamlit_app.py --server.port=${var.streamlit_port} --server.address=0.0.0.0
-    Restart=always
-    RestartSec=10
-    Environment=PYTHONUNBUFFERED=1
-    Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-    EOF
-
-    cat <<'EOF' > /etc/systemd/system/prefect-server.service
-    [Unit]
-    Description=Prefect server for tastetester
-    After=network.target
-
-    [Service]
-    Type=simple
-    User=root
-    WorkingDirectory=/opt/tastetester
-    ExecStart=/opt/tastetester-venv/bin/prefect server start --host 0.0.0.0
-    Restart=always
-    RestartSec=10
-    Environment=PYTHONUNBUFFERED=1
-    Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-    Environment=PREFECT_SERVER_API_AUTH_STRING="${var.prefect_basic_auth_username}:${var.prefect_basic_auth_password}"
-    Environment=PREFECT_API_AUTH_STRING="${var.prefect_basic_auth_username}:${var.prefect_basic_auth_password}"
-    Environment=PREFECT_API_URL="http://$EXTERNAL_IP:${var.prefect_port}/api"
-    EOF
-
-    systemctl daemon-reload
-    systemctl enable streamlit.service
-    systemctl enable prefect-server.service
-    systemctl start streamlit.service
-    systemctl start prefect-server.service
-  EOT
+  metadata_startup_script = templatefile("${path.module}/startup.sh", {
+    repo_url = var.repo_url,
+    prefect_basic_auth_username = var.prefect_basic_auth_username,
+    prefect_basic_auth_password = var.prefect_basic_auth_password,
+    prefect_port = var.prefect_port,
+    streamlit_port = var.streamlit_port,
+    postgres_connection_string = var.postgres_connection_string
+  })
 }
 
 resource "google_compute_firewall" "ssh_access" {
@@ -108,6 +52,19 @@ resource "google_compute_firewall" "ssh_access" {
   }
 
   source_ranges = [var.allowed_ssh_cidr]
+  target_tags   = [var.instance_tag]
+}
+
+resource "google_compute_firewall" "streamlit_access" {
+  name    = "allow-streamlit-http"
+  network = var.network
+
+  allow {
+    protocol = "tcp"
+    ports    = ["${var.streamlit_port}"]
+  }
+
+  source_ranges = var.streamlit_allowed_sources
   target_tags   = [var.instance_tag]
 }
 

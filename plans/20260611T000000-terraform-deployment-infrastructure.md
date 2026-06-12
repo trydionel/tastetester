@@ -14,7 +14,7 @@ TL;DR: Standardize on GCP and build a low-cost Terraform scaffold for a single C
    - Service 2: Cloud SQL PostgreSQL instance for Prefect state and any relational storage.
    - Service 3: GCP Cloud Storage bucket for raw Spotify exports and transformed Parquet training data.
    - Service 4: Vertex AI training jobs and deployed XGBoost model endpoint.
-
+bin
 3. Create a Terraform repo layout.
    - `terraform/` root for infrastructure code.
    - `terraform/modules/` for shared GCP modules: `compute`, `cloud_sql`, `streamlit`, `training_bucket`, `vertex_ai`, `networking`.
@@ -27,17 +27,19 @@ TL;DR: Standardize on GCP and build a low-cost Terraform scaffold for a single C
    - Use a persistent disk for the VM so Prefect state and local ETL artifacts survive restarts.
    - Use a Cloud Storage bucket for raw Spotify exports, transformed Parquet datasets, training code uploads, and model artifacts.
    - Use Vertex AI prebuilt XGBoost training containers for both training and inference.
-   - Restrict all services to internal networking except Streamlit, which is the only publicly routable service.
+   - Restrict all services to internal networking except for the public load balancer, which exposes only `/streamlit` and `/prefect`.
    - Use idle shutdown / scheduling for the compute VM where possible, and consider scheduled Cloud SQL start/stop for non-production usage windows.
 
 5. Codify the infrastructure in Terraform.
    - `terraform/modules/compute` should create a `google_compute_instance` with a startup script to install and launch Prefect, Streamlit, and any local tooling.
-   - `terraform/modules/compute` should also create a firewall rule allowing HTTP/HTTPS to Streamlit and private access for Prefect worker traffic only.
+   - `terraform/modules/compute` should also create a firewall rule allowing only the load balancer proxy ranges to reach the Streamlit and Prefect service ports.
+   - Add a new `terraform/modules/load_balancer` to provision a global HTTP(S) load balancer, an external IP, backend services, URL map, and proxy.
+   - Route `/streamlit` to the Streamlit backend and `/prefect` to the Prefect backend.
    - `terraform/modules/cloud_sql` should provision a `google_sql_database_instance` with private IP access, a low-cost instance tier, and managed credentials stored in Terraform outputs or Secret Manager.
    - `terraform/modules/training_bucket` should provision a `google_storage_bucket` with regional storage, uniform bucket-level access, and IAM bindings for the VM and Vertex AI service accounts.
    - `terraform/modules/vertex_ai` should provision the Vertex AI training job template, managed `google_vertex_ai_model`, and `google_vertex_ai_endpoint` resources. It should also define the model artifact path in GCS.
    - `terraform/modules/networking` should handle the VPC, subnetwork, private service access for Cloud SQL, and any IAM bindings needed for Vertex AI.
-   - Use top-level `main.tf`, `variables.tf`, `providers.tf`, and `outputs.tf` to wire the modules together and expose values like bucket name, Cloud SQL connection string, and Vertex AI endpoint URI.
+   - Use top-level `main.tf`, `variables.tf`, `providers.tf`, and `outputs.tf` to wire the modules together and expose values like bucket name, Cloud SQL connection string, load balancer URL, and Vertex AI endpoint URI.
    - Add Terraform-driven scheduling for cost control: a `google_compute_resource_policy` schedule or instance metadata for idle shutdown, and optionally a Cloud SQL start/stop schedule for non-production hours.
 
 6. Define the model workflow.

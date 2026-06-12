@@ -58,20 +58,14 @@ module "compute" {
   network              = module.networking.network_self_link
   subnetwork           = module.networking.subnetwork_self_link
   streamlit_port            = var.streamlit_port
+  streamlit_allowed_sources = var.streamlit_allowed_sources
   prefect_port              = var.prefect_port
   prefect_allowed_sources   = var.prefect_allowed_sources
   allowed_ssh_cidr          = var.allowed_ssh_cidr
   prefect_basic_auth_username = var.prefect_basic_auth_username
   prefect_basic_auth_password = var.prefect_basic_auth_password
   repo_url                  = var.repo_url
-}
-
-module "streamlit" {
-  source               = "./modules/streamlit"
-  network              = module.networking.network_self_link
-  instance_tag         = module.compute.instance_tag
-  streamlit_port       = var.streamlit_port
-  allowed_sources      = var.streamlit_allowed_sources
+  postgres_connection_string = module.cloud_sql.connection_string
 }
 
 module "training_bucket" {
