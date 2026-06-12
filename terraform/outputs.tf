@@ -23,6 +23,11 @@ output "streamlit_url" {
   value       = "http://${module.compute.instance_external_ip}:${var.streamlit_port}"
 }
 
+output "prefect_url" {
+  description = "Public URL for the Prefect server."
+  value       = "http://${module.compute.instance_external_ip}:${var.prefect_port}"
+}
+
 output "training_bucket_name" {
   description = "Name of the training Cloud Storage bucket."
   value       = module.training_bucket.bucket_name

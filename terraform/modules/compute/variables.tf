@@ -30,6 +30,23 @@ variable "streamlit_port" {
   type = number
 }
 
+variable "prefect_port" {
+  type = number
+}
+
+variable "prefect_allowed_sources" {
+  type = list(string)
+}
+
+variable "prefect_basic_auth_username" {
+  type = string
+}
+
+variable "prefect_basic_auth_password" {
+  type = string
+  sensitive = true
+}
+
 variable "allowed_ssh_cidr" {
   type = string
 }

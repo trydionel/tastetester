@@ -46,7 +46,14 @@ resource "google_compute_instance" "vm" {
 
     python3 -m venv /opt/tastetester-venv
     /opt/tastetester-venv/bin/python -m pip install --upgrade pip setuptools wheel
+    /opt/tastetester-venv/bin/python -m pip install streamlit prefect
     /opt/tastetester-venv/bin/python -m pip install -e /opt/tastetester
+
+    EXTERNAL_IP=$(curl -sfH "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip")
+    if [ -z "$EXTERNAL_IP" ]; then
+      echo "Unable to determine external IP from metadata server"
+      exit 1
+    fi
 
     cat <<'EOF' > /etc/systemd/system/streamlit.service
     [Unit]
@@ -78,6 +85,9 @@ resource "google_compute_instance" "vm" {
     RestartSec=10
     Environment=PYTHONUNBUFFERED=1
     Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    Environment=PREFECT_SERVER_API_AUTH_STRING="${var.prefect_basic_auth_username}:${var.prefect_basic_auth_password}"
+    Environment=PREFECT_API_AUTH_STRING="${var.prefect_basic_auth_username}:${var.prefect_basic_auth_password}"
+    Environment=PREFECT_API_URL="http://$EXTERNAL_IP:${var.prefect_port}/api"
     EOF
 
     systemctl daemon-reload
@@ -98,5 +108,18 @@ resource "google_compute_firewall" "ssh_access" {
   }
 
   source_ranges = [var.allowed_ssh_cidr]
+  target_tags   = [var.instance_tag]
+}
+
+resource "google_compute_firewall" "prefect_access" {
+  name    = "allow-prefect-http"
+  network = var.network
+
+  allow {
+    protocol = "tcp"
+    ports    = ["${var.prefect_port}"]
+  }
+
+  source_ranges = var.prefect_allowed_sources
   target_tags   = [var.instance_tag]
 }

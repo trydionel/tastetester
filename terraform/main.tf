@@ -57,9 +57,13 @@ module "compute" {
   boot_disk_size_gb    = var.boot_disk_size_gb
   network              = module.networking.network_self_link
   subnetwork           = module.networking.subnetwork_self_link
-  streamlit_port       = var.streamlit_port
-  allowed_ssh_cidr     = var.allowed_ssh_cidr
-  repo_url             = var.repo_url
+  streamlit_port            = var.streamlit_port
+  prefect_port              = var.prefect_port
+  prefect_allowed_sources   = var.prefect_allowed_sources
+  allowed_ssh_cidr          = var.allowed_ssh_cidr
+  prefect_basic_auth_username = var.prefect_basic_auth_username
+  prefect_basic_auth_password = var.prefect_basic_auth_password
+  repo_url                  = var.repo_url
 }
 
 module "streamlit" {

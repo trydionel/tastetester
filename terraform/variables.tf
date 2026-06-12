@@ -81,6 +81,29 @@ variable "streamlit_allowed_sources" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "prefect_port" {
+  type        = number
+  description = "Port exposed by the Prefect server."
+  default     = 4200
+}
+
+variable "prefect_allowed_sources" {
+  type        = list(string)
+  description = "CIDR blocks permitted to access the public Prefect service."
+  default     = ["0.0.0.0/0"]
+}
+
+variable "prefect_basic_auth_username" {
+  type        = string
+  description = "Username for Prefect UI basic authentication."
+}
+
+variable "prefect_basic_auth_password" {
+  type        = string
+  description = "Password for Prefect UI basic authentication."
+  sensitive   = true
+}
+
 variable "allowed_ssh_cidr" {
   type        = string
   description = "CIDR block permitted to SSH into the compute instance."
