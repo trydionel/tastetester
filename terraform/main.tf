@@ -28,6 +28,10 @@ resource "google_project_service" "storage" {
   disable_on_destroy = false
 }
 
+resource "google_compute_global_address" "load_balancer_ip" {
+  name = "tastetester-lb-ip"
+}
+
 module "networking" {
   source               = "./modules/networking"
   project              = var.project
@@ -64,14 +68,17 @@ module "compute" {
   prefect_basic_auth_username = var.prefect_basic_auth_username
   prefect_basic_auth_password = var.prefect_basic_auth_password
   repo_url                  = var.repo_url
+  load_balancer_host        = google_compute_global_address.load_balancer_ip.address
 }
 
-module "streamlit" {
-  source               = "./modules/streamlit"
-  network              = module.networking.network_self_link
-  instance_tag         = module.compute.instance_tag
-  streamlit_port       = var.streamlit_port
-  allowed_sources      = var.streamlit_allowed_sources
+module "load_balancer" {
+  source           = "./modules/load_balancer"
+  project          = var.project
+  instance_group   = module.compute.backend_self_link
+  streamlit_port   = var.streamlit_port
+  prefect_port     = var.prefect_port
+  lb_ip_address    = google_compute_global_address.load_balancer_ip.address
+  lb_ip_name       = google_compute_global_address.load_balancer_ip.name
 }
 
 module "training_bucket" {

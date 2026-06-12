@@ -10,6 +10,10 @@ output "instance_tag" {
   value = join(",", google_compute_instance.vm.tags)
 }
 
+output "backend_self_link" {
+  value = google_compute_instance_group.backend.self_link
+}
+
 output "service_account_email" {
   value = google_service_account.compute.email
 }

@@ -38,6 +38,10 @@ variable "prefect_allowed_sources" {
   type = list(string)
 }
 
+variable "load_balancer_host" {
+  type = string
+}
+
 variable "prefect_basic_auth_username" {
   type = string
 }

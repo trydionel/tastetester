@@ -49,12 +49,6 @@ resource "google_compute_instance" "vm" {
     /opt/tastetester-venv/bin/python -m pip install streamlit prefect
     /opt/tastetester-venv/bin/python -m pip install -e /opt/tastetester
 
-    EXTERNAL_IP=$(curl -sfH "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip")
-    if [ -z "$EXTERNAL_IP" ]; then
-      echo "Unable to determine external IP from metadata server"
-      exit 1
-    fi
-
     cat <<'EOF' > /etc/systemd/system/streamlit.service
     [Unit]
     Description=Streamlit app for tastetester
@@ -64,7 +58,7 @@ resource "google_compute_instance" "vm" {
     Type=simple
     User=root
     WorkingDirectory=/opt/tastetester
-    ExecStart=/opt/tastetester-venv/bin/streamlit run /opt/tastetester/streamlit_app.py --server.port=${var.streamlit_port} --server.address=0.0.0.0
+    ExecStart=/opt/tastetester-venv/bin/streamlit run /opt/tastetester/streamlit_app.py --server.port=${var.streamlit_port} --server.address=0.0.0.0 --server.baseUrlPath=/streamlit
     Restart=always
     RestartSec=10
     Environment=PYTHONUNBUFFERED=1
@@ -87,7 +81,10 @@ resource "google_compute_instance" "vm" {
     Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     Environment=PREFECT_SERVER_API_AUTH_STRING="${var.prefect_basic_auth_username}:${var.prefect_basic_auth_password}"
     Environment=PREFECT_API_AUTH_STRING="${var.prefect_basic_auth_username}:${var.prefect_basic_auth_password}"
-    Environment=PREFECT_API_URL="http://$EXTERNAL_IP:${var.prefect_port}/api"
+    Environment=PREFECT_API_URL="http://${var.load_balancer_host}/prefect/api"
+    Environment=PREFECT_UI_URL="http://${var.load_balancer_host}/prefect"
+    Environment=PREFECT_UI_SERVE_BASE="/prefect"
+    Environment=PREFECT_SERVER_API_BASE_PATH="/prefect/api"
     EOF
 
     systemctl daemon-reload
@@ -111,8 +108,21 @@ resource "google_compute_firewall" "ssh_access" {
   target_tags   = [var.instance_tag]
 }
 
+resource "google_compute_firewall" "streamlit_access" {
+  name    = "allow-streamlit-lb"
+  network = var.network
+
+  allow {
+    protocol = "tcp"
+    ports    = ["${var.streamlit_port}"]
+  }
+
+  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
+  target_tags   = [var.instance_tag]
+}
+
 resource "google_compute_firewall" "prefect_access" {
-  name    = "allow-prefect-http"
+  name    = "allow-prefect-lb"
   network = var.network
 
   allow {
@@ -120,6 +130,23 @@ resource "google_compute_firewall" "prefect_access" {
     ports    = ["${var.prefect_port}"]
   }
 
-  source_ranges = var.prefect_allowed_sources
+  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
   target_tags   = [var.instance_tag]
+}
+
+resource "google_compute_instance_group" "backend" {
+  name = "${var.instance_name}-ig"
+  zone = var.zone
+
+  instances = [google_compute_instance.vm.self_link]
+
+  named_port {
+    name = "streamlit"
+    port = var.streamlit_port
+  }
+
+  named_port {
+    name = "prefect"
+    port = var.prefect_port
+  }
 }

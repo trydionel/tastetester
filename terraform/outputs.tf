@@ -18,14 +18,19 @@ output "compute_external_ip" {
   value       = module.compute.instance_external_ip
 }
 
+output "load_balancer_url" {
+  description = "Public URL of the load balancer."
+  value       = module.load_balancer.load_balancer_url
+}
+
 output "streamlit_url" {
   description = "Public URL for the Streamlit application."
-  value       = "http://${module.compute.instance_external_ip}:${var.streamlit_port}"
+  value       = "${module.load_balancer.load_balancer_url}/streamlit"
 }
 
 output "prefect_url" {
   description = "Public URL for the Prefect server."
-  value       = "http://${module.compute.instance_external_ip}:${var.prefect_port}"
+  value       = "${module.load_balancer.load_balancer_url}/prefect"
 }
 
 output "training_bucket_name" {
