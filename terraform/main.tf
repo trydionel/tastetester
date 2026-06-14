@@ -94,3 +94,12 @@ module "cloud_sql" {
     module.networking,
   ]
 }
+
+module "prefect" {
+  source = "./modules/prefect"
+  training_bucket = module.training_bucket.bucket_name
+  depends_on = [
+    module.compute,
+    module.training_bucket
+  ]
+}
