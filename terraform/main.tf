@@ -83,6 +83,7 @@ module "cloud_sql" {
   source   = "./modules/cloud_sql"
   project  = var.project
   region   = var.region
+  account_email = var.account_email
   tier     = var.db_tier
   db_name  = var.db_name
   db_user  = var.db_user
@@ -95,11 +96,3 @@ module "cloud_sql" {
   ]
 }
 
-module "prefect" {
-  source = "./modules/prefect"
-  training_bucket = module.training_bucket.bucket_name
-  depends_on = [
-    module.compute,
-    module.training_bucket
-  ]
-}

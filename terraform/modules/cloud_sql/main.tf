@@ -12,6 +12,7 @@ resource "google_sql_database_instance" "postgres" {
 
   settings {
     tier = var.tier
+    edition = "ENTERPRISE"
     ip_configuration {
       ipv4_enabled    = false
       private_network = var.network
@@ -44,7 +45,7 @@ resource "google_sql_database" "db" {
 }
 
 resource "google_sql_user" "iam_user" {
-  name     = "trydionel@gmail.com" # FIXME: Why doesn't this work with the service account email?
+  name     = var.account_email
   instance = google_sql_database_instance.postgres.name
   type     = "CLOUD_IAM_USER" 
   database_roles = ["cloudsqlsuperuser"]  # Roles granted to the user. Smaller roles are preferred, if exist.

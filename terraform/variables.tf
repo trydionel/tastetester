@@ -15,6 +15,11 @@ variable "zone" {
   default     = "us-central1-a"
 }
 
+variable "account_email" {
+  type = string
+  description = "The primary email address for the GCP account."
+}
+
 variable "network_name" {
   type        = string
   description = "The VPC network name for the deployment."

@@ -10,6 +10,10 @@ variable "tier" {
   type = string
 }
 
+variable "account_email" {
+  type = string
+}
+
 variable "db_name" {
   type = string
 }
