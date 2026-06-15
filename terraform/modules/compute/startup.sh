@@ -9,8 +9,9 @@ rm -rf tastetester
 git clone --single-branch --branch terraform "${repo_url}" tastetester
 cd tastetester
 
-pip3 install uv
-UV_PROJECT_ENVIRONMENT=/opt/tastetester-venv uv sync --frozen
+python3 -m venv /opt/tastetester-venv
+/opt/tastetester-venv/bin/python -m pip install uv
+UV_PROJECT_ENVIRONMENT=/opt/tastetester-venv /opt/tastetester-venv/bin/uv sync --frozen
 
 # Get external IP address from metadata server, as we can't get it at build time from Terraform
 EXTERNAL_IP=$(curl -sfH "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip")
