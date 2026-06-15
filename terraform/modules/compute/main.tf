@@ -38,7 +38,9 @@ resource "google_compute_instance" "vm" {
     prefect_basic_auth_password = var.prefect_basic_auth_password,
     prefect_port = var.prefect_port,
     streamlit_port = var.streamlit_port,
-    postgres_connection_string = var.postgres_connection_string
+    postgres_connection_string = var.postgres_connection_string,
+    training_bucket_name = var.training_bucket_name,
+    gcp_project = var.project,
   })
 }
 

@@ -71,3 +71,7 @@ variable "instance_tag" {
 variable "postgres_connection_string" {
   type = string
 }
+
+variable "training_bucket_name" {
+  type = string
+}

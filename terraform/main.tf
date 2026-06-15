@@ -66,6 +66,7 @@ module "compute" {
   prefect_basic_auth_password = var.prefect_basic_auth_password
   repo_url                  = var.repo_url
   postgres_connection_string = module.cloud_sql.connection_string
+  training_bucket_name       = var.training_bucket_name
 }
 
 module "training_bucket" {

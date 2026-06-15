@@ -72,6 +72,7 @@ ExecStart=/opt/tastetester-venv/bin/prefect worker start -p "tastetester-work-po
 Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1
+Environment=TASTETESTER_TRAINING_BUCKET=${training_bucket_name}
 Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EOF
 
@@ -84,6 +85,16 @@ systemctl start prefect-server.service
 
 # Wait for server to be ready
 /opt/tastetester-venv/bin/prefect server status --wait
+
+# Register GcsBucket block for the training bucket
+/opt/tastetester-venv/bin/python -c "
+from prefect_gcp import GcpCredentials
+from prefect_gcp.cloud_storage import GcsBucket
+
+creds = GcpCredentials(project='${gcp_project}')
+b = GcsBucket(bucket='${training_bucket_name}', gcp_credentials=creds)
+b.save('${training_bucket_name}', overwrite=True)
+"
 
 # Create prefect resources via CLI (idempotent: || true to skip if already exists)
 /opt/tastetester-venv/bin/prefect work-pool create "tastetester-work-pool" --type process || true

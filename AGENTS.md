@@ -3,7 +3,7 @@
 ## Commands
 
 ```sh
-PREFECT_API_URL=http://127.0.0.1:4200/api uv run python main.py
+PREFECT_API_URL=http://127.0.0.1:4200/api uv run python -m etl.main
 # Or with a local prefect server:
 #   uv run prefect server start --host 127.0.0.1 &; PREFECT_API_URL=... uv run python main.py
 

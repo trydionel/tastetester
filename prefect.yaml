@@ -24,10 +24,18 @@ pull:
     id: pull_repo
     script: git pull
     stream_output: false
-- prefect.deployments.steps.pull_from_gcs:
+- prefect.deployments.steps.run_shell_script:
+    id: ensure_data_dir
+    script: mkdir -p data
+    stream_output: false
+- prefect.deployments.steps.set_working_directory:
+    directory: /opt/tastetester/data
+- prefect_gcp.deployments.steps.pull_from_gcs:
     requires: prefect-gcp>=0.3.0
-    bucket: tastetester-bucket
+    bucket: tastetester-training-bucket
     folder: data
+- prefect.deployments.steps.set_working_directory:
+    directory: /opt/tastetester
 
 # the deployments section allows you to provide configuration
 # for deploying flows
