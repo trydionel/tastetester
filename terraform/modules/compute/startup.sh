@@ -88,6 +88,5 @@ systemctl start prefect-server.service
 # Create prefect resources via CLI (idempotent: || true to skip if already exists)
 /opt/tastetester-venv/bin/prefect work-pool create "tastetester-work-pool" --type process || true
 /opt/tastetester-venv/bin/prefect work-queue create "tastetester-work-queue" --pool "tastetester-work-pool" --limit 1 || true
-/opt/tastetester-venv/bin/prefect deploy /opt/tastetester/main.py:main --name "tastetester-etl" --pool "tastetester-work-pool" --work-queue "tastetester-work-queue" || true
 
 systemctl start prefect-worker.service
