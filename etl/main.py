@@ -15,7 +15,7 @@ def main():
 
     bucket_name = os.environ["TASTETESTER_TRAINING_BUCKET"]
     bucket = GcsBucket.load(bucket_name)
-    bucket.upload_from_folder(root_path().join('etl', 'artifacts'), 'artifacts')
+    bucket.upload_from_folder(root_path().joinpath('etl', 'artifacts'), 'artifacts')
 
 if __name__ == "__main__":
     main()
