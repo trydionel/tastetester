@@ -1,11 +1,14 @@
 import requests
 import musicbrainzngs as mb
+from ratelimit import limits, sleep_and_retry
 
 def _prep_mb():
   mb.set_rate_limit()
   mb.set_useragent('trydionel-ds-project', '0.0.1', 'jeff@trydionel.com')
 
 
+@sleep_and_retry
+@limits(calls=1, period=1)
 def _reccobeats(path, params):
   headers = {
     'Accept': 'application/json',
