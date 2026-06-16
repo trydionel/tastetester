@@ -79,7 +79,7 @@ def train(train_data_path, model_output_path):
     model.fit(X, y, eval_set=[(X, y)], verbose=True)
 
     os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
-    model.save_model(Path(model_output_path).joinpath("play_count.bsl"))
+    model.save_model(Path(model_output_path).joinpath("model.bst"))
     log.info("Model saved to %s", model_output_path)
 
 if __name__ == '__main__':
