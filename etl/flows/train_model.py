@@ -30,8 +30,8 @@ def initiate_training(package_uri: str, training_data_uri: str, model_output_uri
         replica_count=1,
         machine_type=TRAIN_COMPUTE,
         args=[
-            "--train-data-path", training_data_uri,
-            "--model-output-path", model_output_uri
+            "--train-data-path", training_data_uri.replace('gs://', '/gcs/'),
+            "--model-output-path", model_output_uri.replace('gs://', '/gcs/')
         ],
         sync=True
     )
