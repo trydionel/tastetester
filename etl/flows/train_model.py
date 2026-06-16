@@ -59,7 +59,7 @@ def train_model(bucket_name: str, package_uri: str):
     bucket_name = bucket.bucket
     project_id = bucket.gcp_credentials.project
     train_data_uri = "gs://{}/artifacts/tracks.parquet".format(bucket_name)
-    model_output_uri = "gs://{}/vertex-ai/models/tastetester.bst".format(bucket_name)
+    model_output_uri = "gs://{}/vertex-ai/models".format(bucket_name)
 
     aiplatform.init(project=project_id, staging_bucket=bucket_name)
 

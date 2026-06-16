@@ -2,6 +2,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+from pathlib import Path
 import sys
 import pandas as pd
 import xgboost as xgb
@@ -78,7 +79,7 @@ def train(train_data_path, model_output_path):
     model.fit(X, y, eval_set=[(X, y)], verbose=True)
 
     os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
-    model.save_model(model_output_path)
+    model.save_model(Path(model_output_path).joinpath("play_count.bsl"))
     log.info("Model saved to %s", model_output_path)
 
 if __name__ == '__main__':
