@@ -23,7 +23,23 @@ def train(train_data_path, model_output_path):
     df_listens = pd.read_parquet(train_data_path)
     log.info("Loaded %d rows, %d columns", len(df_listens), len(df_listens.columns))
 
-    X = df_listens.drop(columns=['total_plays'])
+    X = df_listens.drop(columns=[
+       # target variable
+       'total_plays',
+
+       # identifiers
+       'spotify_track_uri',
+       'master_metadata_album_artist_name',
+       'master_metadata_album_album_name',
+       'master_metadata_track_name',
+       'id',
+       'href',
+       'isrc',
+
+       # unwanted features
+       'release_date_year',
+       'total_tracks'
+      ])
     y = df_listens['total_plays']
     log.info("Features: %s", list(X.columns))
 

@@ -27,8 +27,7 @@ resource "google_project_iam_member" "vm_vertex_user" {
   member = "serviceAccount:${var.vm_service_account_email}"
 }
 resource "google_storage_bucket_object" "training_package" {
-  name        = var.training_package_gcs_path
-  bucket      = var.bucket_name
-  source      = archive_file.model_package.output_path
-  source_hash = archive_file.model_package.output_base64sha256
+  name   = var.training_package_gcs_path
+  bucket = var.bucket_name
+  source = archive_file.model_package.output_path
 }
