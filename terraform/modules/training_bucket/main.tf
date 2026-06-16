@@ -11,6 +11,12 @@ resource "google_storage_bucket_iam_member" "vm_writer" {
   member = "serviceAccount:${var.vm_service_account_email}"
 }
 
+resource "google_storage_bucket_iam_member" "vm_bucket_reader" {
+  bucket = google_storage_bucket.training.name
+  role   = "roles/storage.legacyBucketReader"
+  member = "serviceAccount:${var.vm_service_account_email}"
+}
+
 resource "google_storage_bucket_iam_member" "vertex_writer" {
   bucket = google_storage_bucket.training.name
   role   = "roles/storage.objectAdmin"
