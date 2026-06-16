@@ -1,9 +1,7 @@
 import os
 
 from prefect import flow
-from etl.flows import analyze_albums, analyze_artists, analyze_genres, analyze_tracks, construct_listens_history
-from etl.common import root_path
-from prefect_gcp.cloud_storage import GcsBucket
+from etl.flows import analyze_albums, analyze_artists, analyze_genres, analyze_tracks, construct_listens_history, train_model
 
 @flow
 def main():
@@ -14,8 +12,9 @@ def main():
     df_genres = analyze_genres(df_artists, df_listens)
 
     bucket_name = os.environ["TASTETESTER_TRAINING_BUCKET"]
-    bucket = GcsBucket.load(bucket_name)
-    bucket.upload_from_folder(root_path().joinpath('etl', 'artifacts'), 'artifacts')
+    package_uri = os.environ["TASTETESTER_TRAINING_PACKAGE_GCS_URI"]
+    if bucket_name is not None:
+        train_model(bucket_name, package_uri)
 
 if __name__ == "__main__":
     main()

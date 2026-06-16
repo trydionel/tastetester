@@ -38,15 +38,6 @@ module "networking" {
   depends_on           = [google_project_service.servicenetworking]
 }
 
-module "vertex_ai" {
-  source               = "./modules/vertex_ai"
-  project              = var.project
-  region               = var.region
-  endpoint_display_name = var.endpoint_display_name
-  bucket_name          = var.training_bucket_name
-  depends_on           = [google_project_service.aiplatform]
-}
-
 module "compute" {
   source               = "./modules/compute"
   project              = var.project
@@ -67,6 +58,7 @@ module "compute" {
   repo_url                  = var.repo_url
   postgres_connection_string = module.cloud_sql.connection_string
   training_bucket_name       = var.training_bucket_name
+  training_package_gcs_uri = var.training_package_gcs_uri
 }
 
 module "training_bucket" {
@@ -75,9 +67,20 @@ module "training_bucket" {
   region                     = var.region
   bucket_name                = var.training_bucket_name
   vm_service_account_email   = module.compute.service_account_email
-  vertex_service_account_email = module.vertex_ai.service_account_email
-  training_script_gcs_path   = var.training_script_gcs_path
   depends_on                 = [google_project_service.storage]
+}
+
+module "vertex_ai" {
+  source               = "./modules/vertex_ai"
+  project              = var.project
+  region               = var.region
+  endpoint_display_name = var.endpoint_display_name
+  bucket_name          = var.training_bucket_name
+  training_package_gcs_path = var.training_package_gcs_path
+  depends_on           = [
+    google_project_service.aiplatform,
+    module.training_bucket
+  ]
 }
 
 module "cloud_sql" {

@@ -33,6 +33,7 @@ resource "google_compute_instance" "vm" {
   }
 
   metadata_startup_script = templatefile("${path.module}/startup.sh", {
+    gcp_project = var.project,
     repo_url = var.repo_url,
     prefect_basic_auth_username = var.prefect_basic_auth_username,
     prefect_basic_auth_password = var.prefect_basic_auth_password,
@@ -40,7 +41,7 @@ resource "google_compute_instance" "vm" {
     streamlit_port = var.streamlit_port,
     postgres_connection_string = var.postgres_connection_string,
     training_bucket_name = var.training_bucket_name,
-    gcp_project = var.project,
+    training_package_gcs_uri = var.training_package_gcs_uri
   })
 }
 

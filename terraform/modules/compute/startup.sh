@@ -13,6 +13,9 @@ python3 -m venv /opt/tastetester-venv
 /opt/tastetester-venv/bin/python -m pip install uv
 UV_PROJECT_ENVIRONMENT=/opt/tastetester-venv /opt/tastetester-venv/bin/uv sync --frozen
 
+# Put the python venv binaries into $PATH for all users
+echo 'PATH="$PATH:/opt/tastetester-venv/bin" >> /etc/profile
+
 # Get external IP address from metadata server, as we can't get it at build time from Terraform
 EXTERNAL_IP=$(curl -sfH "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip")
     if [ -z "$EXTERNAL_IP" ]; then
@@ -73,6 +76,7 @@ Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1
 Environment=TASTETESTER_TRAINING_BUCKET=${training_bucket_name}
+Environment=TASTETESTER_TRAINING_PACKAGE_GCS_URI=${training_package_gcs_uri}
 Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EOF
 

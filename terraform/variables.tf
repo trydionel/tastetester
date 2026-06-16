@@ -44,10 +44,10 @@ variable "training_bucket_name" {
   default     = "tastetester-training-bucket"
 }
 
-variable "training_script_gcs_path" {
-  type        = string
-  description = "Object path in the training bucket for the Vertex AI training script."
-  default     = "vertex-ai/training/vertex_ai_training.py"
+variable "training_package_gcs_path" {
+  type = string
+  description = "Object path in the training bucket for the Vertex AI training package."
+  default = "vertex-ai/training/play-count.tgz"
 }
 
 variable "instance_name" {

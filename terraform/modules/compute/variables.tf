@@ -75,3 +75,7 @@ variable "postgres_connection_string" {
 variable "training_bucket_name" {
   type = string
 }
+
+variable "training_package_gcs_uri" {
+  type = string
+}
