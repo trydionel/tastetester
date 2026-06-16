@@ -58,7 +58,7 @@ module "compute" {
   repo_url                  = var.repo_url
   postgres_connection_string = module.cloud_sql.connection_string
   training_bucket_name       = var.training_bucket_name
-  training_package_gcs_uri = var.training_package_gcs_uri
+  training_package_gcs_uri = module.vertex_ai.training_package_gcs_uri
 }
 
 module "training_bucket" {
@@ -77,6 +77,7 @@ module "vertex_ai" {
   endpoint_display_name = var.endpoint_display_name
   bucket_name          = var.training_bucket_name
   training_package_gcs_path = var.training_package_gcs_path
+  vm_service_account_email   = module.compute.service_account_email
   depends_on           = [
     google_project_service.aiplatform,
     module.training_bucket

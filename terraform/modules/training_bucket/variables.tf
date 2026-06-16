@@ -13,11 +13,3 @@ variable "bucket_name" {
 variable "vm_service_account_email" {
   type = string
 }
-
-variable "vertex_service_account_email" {
-  type = string
-}
-
-variable "training_script_gcs_path" {
-  type = string
-}

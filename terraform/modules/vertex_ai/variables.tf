@@ -18,3 +18,11 @@ variable "endpoint_name" {
 variable "bucket_name" {
   type = string
 }
+
+variable "vm_service_account_email" {
+  type = string
+}
+
+variable "training_package_gcs_path" {
+  type = string
+}

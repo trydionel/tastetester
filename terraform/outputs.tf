@@ -35,7 +35,7 @@ output "training_bucket_name" {
 
 output "training_package_gcs_uri" {
   description = "GCS URI for the uploaded Vertex AI training script."
-  value       = module.training_bucket.training_package_gcs_uri
+  value       = module.vertex_ai.training_package_gcs_uri
 }
 
 output "cloud_sql_connection_name" {
