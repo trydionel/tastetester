@@ -12,6 +12,11 @@ CONTENT_FEATURES = {
     "table": "track_content_vectors",
 }
 
+PREDICTION_FEATURES = (
+    "acousticness", "danceability", "energy", "instrumentalness",
+    "key", "liveness", "loudness", "mode", "speechiness", "tempo", "valence",
+)
+
 BEHAVIORAL_COLS = {
     "total_plays": "total_plays",
     "total_playtime_ms": "total_playtime_ms",

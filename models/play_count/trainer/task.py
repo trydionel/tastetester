@@ -19,30 +19,22 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
+PREDICTION_FEATURES = (
+    "acousticness", "danceability", "energy", "instrumentalness",
+    "key", "liveness", "loudness", "mode", "speechiness", "tempo", "valence",
+)
+
+
 def train(train_data_path, model_output_path):
     log.info("Loading training data from %s", train_data_path)
     df_listens = pd.read_parquet(train_data_path)
     log.info("Loaded %d rows, %d columns", len(df_listens), len(df_listens.columns))
 
-    X = df_listens.drop(columns=[
-       # target variable
-       'total_plays',
-
-       # identifiers
-       'spotify_track_uri',
-       'master_metadata_album_artist_name',
-       'master_metadata_album_album_name',
-       'master_metadata_track_name',
-       'id',
-       'href',
-       'isrc',
-
-       # unwanted features
-       'release_date_year',
-       'total_tracks'
-      ])
+    feature_cols = [c for c in df_listens.columns
+                    if c in PREDICTION_FEATURES or c.startswith("genre:")]
+    X = df_listens[feature_cols]
     y = df_listens['total_plays']
-    log.info("Features: %s", list(X.columns))
+    log.info("Features (%d): %s", len(feature_cols), feature_cols)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     log.info("Train/val split: %d / %d rows", len(X_train), len(X_test))

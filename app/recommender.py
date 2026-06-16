@@ -1,16 +1,14 @@
+import json
 import logging
 import os
 from pathlib import Path
 from typing import Any
 from pydantic import BaseModel
-from sklearn.model_selection import train_test_split
-import xgboost as xgb
-import optuna
 import numpy as np
-import pandas as pd
 import requests
 
 from etl.common.audio_features import fetch_audio_features, fetch_genres, fetch_track_details
+from etl.common.vector_schemas import PREDICTION_FEATURES
 from etl.common.vectorstore import ListeningVectorStore
 
 try:
@@ -31,6 +29,14 @@ class Recommender():
   def __init__(self, random_state = None, prediction_uri: str | None = None):
     self._store = ListeningVectorStore()
     self._prediction_uri = prediction_uri or os.getenv("TASTETESTER_MODEL_PREDICTION_URI")
+    self._prediction_features = self._load_prediction_features()
+
+  def _load_prediction_features(self):
+    path = Path(__file__).parent.parent / "etl" / "artifacts" / "prediction_features.json"
+    if path.exists():
+      with open(path) as f:
+        return json.load(f)
+    return list(PREDICTION_FEATURES)
   
   def analyze(self, track) -> TrackAnalysis:
     logging.debug(f"Fetching track details for {track}")
@@ -67,8 +73,9 @@ class Recommender():
 
       match |= dict(match_details)
     
-    analysis = { 
+    analysis = {
       "details": dict(track_details) | { 'genres': genres },
+      "audio_features": audio_features,
       "vector": vector,
       "matches": matches
     }
@@ -79,8 +86,21 @@ class Recommender():
 
     return TrackAnalysis(**analysis)
 
+  def _build_prediction_vector(self, analysis):
+    audio_features = analysis.get("audio_features", {})
+    genres = analysis.get("details", {}).get("genres", []) or []
+    genre_set = set(genres)
+    vec = []
+    for feat in self._prediction_features:
+      if feat.startswith("genre:"):
+        genre_name = feat.removeprefix("genre:")
+        vec.append(1.0 if genre_name in genre_set else 0.0)
+      else:
+        vec.append(audio_features.get(feat, 0.0))
+    return vec
+
   def _predict_listens(self, analysis):
-    return self._predict_with_vertex_ai(analysis['vector'])
+    return self._predict_with_vertex_ai(self._build_prediction_vector(analysis))
 
   def _predict_with_vertex_ai(self, vector):
     if google is None or GoogleAuthRequest is None:

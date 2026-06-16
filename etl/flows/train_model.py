@@ -1,8 +1,12 @@
+import json
+
+import pandas as pd
 from prefect import flow, task
 from prefect_gcp.cloud_storage import GcsBucket
 from google.cloud import aiplatform
 
 from etl.common import root_path
+from etl.common.vector_schemas import PREDICTION_FEATURES
 
 TRAIN_VERSION = "xgboost-cpu.1-1"
 DEPLOY_VERSION = "xgboost-cpu.1-1"
@@ -12,6 +16,17 @@ DEPLOY_IMAGE = "gcr.io/cloud-aiplatform/prediction/{}:latest".format(DEPLOY_VERS
 
 TRAIN_COMPUTE="n1-standard-4" 
 DEPLOY_COMPUTE="n1-standard-4" 
+
+@task
+def save_prediction_features():
+    df = pd.read_parquet(
+        root_path().joinpath("etl", "artifacts", "tracks.parquet")
+    )
+    feature_cols = [c for c in df.columns
+                    if c in PREDICTION_FEATURES or c.startswith("genre:")]
+    out_path = root_path().joinpath("etl", "artifacts", "prediction_features.json")
+    with open(out_path, "w") as f:
+        json.dump(feature_cols, f)
 
 @task
 def upload_artifacts_to_gcs(bucket: GcsBucket):
@@ -65,6 +80,7 @@ def train_model(bucket_name: str, package_uri: str, endpoint_id: str):
 
     aiplatform.init(project=project_id, staging_bucket=bucket_name)
 
+    save_prediction_features()
     upload_artifacts_to_gcs(bucket)
     initiate_training(package_uri, train_data_uri, model_output_uri)
     model = upload_model_to_gcs(model_output_uri)
