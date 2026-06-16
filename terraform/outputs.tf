@@ -48,9 +48,19 @@ output "cloud_sql_private_ip" {
   value       = module.cloud_sql.private_ip
 }
 
-output "vertex_ai_endpoint_name" {
+output "vertex_ai_endpoint_id" {
   description = "Full resource name of the Vertex AI endpoint."
-  value       = module.vertex_ai.endpoint_name
+  value       = module.vertex_ai.endpoint_id
+}
+
+output "vertex_ai_endpoint_uri" {
+  description = "Full resource name of the Vertex AI endpoint."
+  value       = module.vertex_ai.model_endpoint_uri
+}
+
+output "vertex_ai_prediction_uri" {
+  description = "Full HTTPS prediction URL for the deployed Vertex AI endpoint."
+  value       = module.vertex_ai.prediction_uri
 }
 
 output "vertex_ai_service_account_email" {

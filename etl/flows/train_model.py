@@ -46,15 +46,17 @@ def upload_model_to_gcs(model_path: str):
     )
 
 @task
-def deploy_model(model: aiplatform.Model):
+def deploy_model(model: aiplatform.Model, endpoint_id: str):
+    endpoint = aiplatform.Endpoint(endpoint_id)
     return model.deploy(
+        endpoint=endpoint,
         deployed_model_display_name="tastetester-deployed-model",
         machine_type=DEPLOY_COMPUTE,
         sync=True
     )
 
 @flow
-def train_model(bucket_name: str, package_uri: str):
+def train_model(bucket_name: str, package_uri: str, endpoint_id: str):
     bucket = GcsBucket.load(bucket_name)
     bucket_name = bucket.bucket
     project_id = bucket.gcp_credentials.project
@@ -66,4 +68,4 @@ def train_model(bucket_name: str, package_uri: str):
     upload_artifacts_to_gcs(bucket)
     initiate_training(package_uri, train_data_uri, model_output_uri)
     model = upload_model_to_gcs(model_output_uri)
-    deploy_model(model)
+    deploy_model(model, endpoint_id)

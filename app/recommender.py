@@ -28,53 +28,9 @@ class TrackAnalysis(BaseModel):
   percentile: float
 
 class Recommender():
-  def __init__(self, random_state = None, vertex_ai_endpoint: str | None = None):
+  def __init__(self, random_state = None, prediction_uri: str | None = None):
     self._store = ListeningVectorStore()
-    self._predicted_listens_model_path = Path(__file__).joinpath("../../etl/artifacts/predicted_listens_model.ubj").resolve()
-    self._random_state = random_state or 42
-    self._vertex_ai_endpoint = vertex_ai_endpoint or os.getenv("VERTEX_AI_ENDPOINT")
-  
-  def _predicted_listens_model(self):
-    if self._predicted_listens_model_path.exists():
-      logging.debug(f"Loading predicted listens model from {self._predicted_listens_model_path}")
-      model = xgb.XGBRegressor()
-      model.load_model(self._predicted_listens_model_path)
-      return model
-    
-    df_listens = self._store.get_tracks_dataframe()
-    X = df_listens[self._store.feature_columns()]
-    y = df_listens['total_plays']
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=self._random_state)
-
-    def objective(trial):
-      pruning_callback = optuna.integration.XGBoostPruningCallback(trial, 'validation_0-poisson-nloglik')
-      params = {
-        "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
-        "max_depth": trial.suggest_int("max_depth", 6, 12),
-        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.1),
-        "tree_method": trial.suggest_categorical("tree_method", ["exact", "approx", "hist"]),
-        "alpha": trial.suggest_float("alpha", 0.0, 1.0),
-        "objective": "count:poisson",
-        "eval_metric": "poisson-nloglik",
-        "seed": self._random_state,
-        "callbacks": [pruning_callback],
-        "early_stopping_rounds": 50
-      }
-
-      model = xgb.XGBRegressor(**params)
-      model.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
-      results = model.evals_result()
-      return np.max(results['validation_0']['poisson-nloglik'])
-
-    study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=self._random_state))
-    study.optimize(objective, n_trials=10)
-
-    model = xgb.XGBRegressor(**study.best_params)
-    model.fit(X, y)
-
-    model.save_model(self._predicted_listens_model_path)
-    return model
+    self._prediction_uri = prediction_uri or os.getenv("TASTETESTER_MODEL_PREDICTION_URI")
   
   def analyze(self, track) -> TrackAnalysis:
     logging.debug(f"Fetching track details for {track}")
@@ -124,35 +80,20 @@ class Recommender():
     return TrackAnalysis(**analysis)
 
   def _predict_listens(self, analysis):
-    if self._vertex_ai_endpoint:
-      try:
-        return self._predict_with_vertex_ai(analysis['vector'])
-      except Exception as exc:
-        logging.warning("Vertex AI prediction failed, falling back to local model: %s", exc)
-
-    model = self._predicted_listens_model()
-    input_df = pd.DataFrame.from_records([analysis['vector']], columns=self._store.feature_columns())
-    expected_plays = model.predict(input_df)
-
-    return float(expected_plays[0])
+    return self._predict_with_vertex_ai(analysis['vector'])
 
   def _predict_with_vertex_ai(self, vector):
     if google is None or GoogleAuthRequest is None:
       raise RuntimeError("google-auth is required for Vertex AI prediction")
+    if not self._prediction_uri:
+      raise RuntimeError("TASTETESTER_MODEL_PREDICTION_URI is not set")
 
     credentials, _ = google.auth.default()
     if not credentials.valid:
       credentials.refresh(GoogleAuthRequest())
 
-    if self._vertex_ai_endpoint.startswith("projects/"):
-      predict_url = f"https://{os.getenv('GOOGLE_CLOUD_REGION', 'us-central1')}-aiplatform.googleapis.com/v1/{self._vertex_ai_endpoint}:predict"
-    elif self._vertex_ai_endpoint.startswith("https://"):
-      predict_url = f"{self._vertex_ai_endpoint}:predict"
-    else:
-      predict_url = f"https://{os.getenv('GOOGLE_CLOUD_REGION', 'us-central1')}-aiplatform.googleapis.com/v1/{self._vertex_ai_endpoint}:predict"
-
     response = requests.post(
-      predict_url,
+      self._prediction_uri,
       headers={
         "Authorization": f"Bearer {credentials.token}",
         "Content-Type": "application/json",

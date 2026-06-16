@@ -41,7 +41,9 @@ resource "google_compute_instance" "vm" {
     streamlit_port = var.streamlit_port,
     postgres_connection_string = var.postgres_connection_string,
     training_bucket_name = var.training_bucket_name,
-    training_package_gcs_uri = var.training_package_gcs_uri
+    training_package_gcs_uri = var.training_package_gcs_uri,
+    model_endpoint_id = var.model_endpoint_id,
+    model_prediction_uri = var.model_prediction_uri
   })
 }
 

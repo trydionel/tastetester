@@ -79,3 +79,11 @@ variable "training_bucket_name" {
 variable "training_package_gcs_uri" {
   type = string
 }
+
+variable "model_endpoint_id" {
+  type = string
+}
+
+variable "model_prediction_uri" {
+  type = string
+}

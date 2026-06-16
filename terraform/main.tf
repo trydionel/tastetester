@@ -59,6 +59,8 @@ module "compute" {
   postgres_connection_string = module.cloud_sql.connection_string
   training_bucket_name       = var.training_bucket_name
   training_package_gcs_uri = module.vertex_ai.training_package_gcs_uri
+  model_endpoint_id = module.vertex_ai.endpoint_id
+  model_prediction_uri = module.vertex_ai.prediction_uri
 }
 
 module "training_bucket" {

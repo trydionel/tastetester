@@ -1,5 +1,14 @@
-output "endpoint_name" {
-  value = google_vertex_ai_endpoint.model_endpoint.name
+output "endpoint_id" {
+  value = google_vertex_ai_endpoint.model_endpoint.id
+}
+
+output "model_endpoint_uri" {
+  value = google_vertex_ai_endpoint.model_endpoint.id
+}
+
+output "prediction_uri" {
+  description = "Full HTTPS prediction URL for the Vertex AI endpoint"
+  value       = "https://${var.region}-aiplatform.googleapis.com/v1/${google_vertex_ai_endpoint.model_endpoint.id}:predict"
 }
 
 output "service_account_email" {

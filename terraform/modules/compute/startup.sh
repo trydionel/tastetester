@@ -43,6 +43,7 @@ ExecStart=/opt/tastetester-venv/bin/streamlit run /opt/tastetester/streamlit_app
 Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1
+Environment=TASTETESTER_MODEL_PREDICTION_URI=${model_prediction_uri}
 Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EOF
 
@@ -77,6 +78,8 @@ RestartSec=10
 Environment=PYTHONUNBUFFERED=1
 Environment=TASTETESTER_TRAINING_BUCKET=${training_bucket_name}
 Environment=TASTETESTER_TRAINING_PACKAGE_GCS_URI=${training_package_gcs_uri}
+Environment=TASTETESTER_MODEL_ENDPOINT_ID=${model_endpoint_id}
+Environment=TASTETESTER_MODEL_PREDICTION_URI=${model_prediction_uri}
 Environment=PATH=/opt/tastetester-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EOF
 
