@@ -61,6 +61,7 @@ module "compute" {
   training_package_gcs_uri = module.vertex_ai.training_package_gcs_uri
   model_endpoint_id = module.vertex_ai.endpoint_id
   model_prediction_uri = module.vertex_ai.prediction_uri
+  model_id = module.vertex_ai.model_id
 }
 
 module "training_bucket" {

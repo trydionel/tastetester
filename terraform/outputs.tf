@@ -67,3 +67,8 @@ output "vertex_ai_service_account_email" {
   description = "Service account email used for Vertex AI operations."
   value       = module.vertex_ai.service_account_email
 }
+
+output "vertex_ai_model_id" {
+  description = "Full resource name of the Vertex AI model."
+  value       = module.vertex_ai.model_id
+}

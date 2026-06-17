@@ -14,8 +14,9 @@ def main():
     bucket_name = os.environ["TASTETESTER_TRAINING_BUCKET"]
     package_uri = os.environ["TASTETESTER_TRAINING_PACKAGE_GCS_URI"]
     endpoint_id = os.environ["TASTETESTER_MODEL_ENDPOINT_ID"]
+    model_id = os.environ.get("TASTETESTER_MODEL_ID")
     if bucket_name is not None:
-        train_model(bucket_name, package_uri, endpoint_id)
+        train_model(bucket_name, package_uri, endpoint_id, model_id=model_id)
 
 if __name__ == "__main__":
     main()

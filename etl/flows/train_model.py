@@ -52,13 +52,16 @@ def initiate_training(package_uri: str, training_data_uri: str, model_output_uri
     )
 
 @task
-def upload_model_to_gcs(model_path: str):
-    return aiplatform.Model.upload(
+def upload_model_to_gcs(model_path: str, model_id: str | None = None):
+    kwargs = dict(
         display_name="tastetester-model",
         artifact_uri=model_path,
         serving_container_image_uri=DEPLOY_IMAGE,
-        sync=True
+        sync=True,
     )
+    if model_id:
+        kwargs["parent_model"] = model_id
+    return aiplatform.Model.upload(**kwargs)
 
 @task
 def deploy_model(model: aiplatform.Model, endpoint_id: str):
@@ -71,7 +74,7 @@ def deploy_model(model: aiplatform.Model, endpoint_id: str):
     )
 
 @flow
-def train_model(bucket_name: str, package_uri: str, endpoint_id: str):
+def train_model(bucket_name: str, package_uri: str, endpoint_id: str, model_id: str | None = None):
     bucket = GcsBucket.load(bucket_name)
     bucket_name = bucket.bucket
     project_id = bucket.gcp_credentials.project
@@ -83,5 +86,5 @@ def train_model(bucket_name: str, package_uri: str, endpoint_id: str):
     save_prediction_features()
     upload_artifacts_to_gcs(bucket)
     initiate_training(package_uri, train_data_uri, model_output_uri)
-    model = upload_model_to_gcs(model_output_uri)
+    model = upload_model_to_gcs(model_output_uri, model_id=model_id)
     deploy_model(model, endpoint_id)

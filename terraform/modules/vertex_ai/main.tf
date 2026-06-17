@@ -9,6 +9,16 @@ resource "google_vertex_ai_endpoint" "model_endpoint" {
   location     = var.region
 }
 
+resource "google_vertex_ai_model" "play_count" {
+  region       = var.region
+  display_name = "tastetester-model"
+  description  = "Play count prediction model"
+
+  container_spec {
+    image_uri = "gcr.io/cloud-aiplatform/prediction/xgboost-cpu.1-1:latest"
+  }
+}
+
 resource "archive_file" "model_package" {
   type = "tar.gz"
   source_dir = "${path.root}/../models/play_count"

@@ -87,3 +87,7 @@ variable "model_endpoint_id" {
 variable "model_prediction_uri" {
   type = string
 }
+
+variable "model_id" {
+  type = string
+}

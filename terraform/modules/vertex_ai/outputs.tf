@@ -1,3 +1,7 @@
+output "model_id" {
+  value = google_vertex_ai_model.play_count.name
+}
+
 output "endpoint_id" {
   value = google_vertex_ai_endpoint.model_endpoint.id
 }

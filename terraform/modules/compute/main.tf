@@ -43,7 +43,8 @@ resource "google_compute_instance" "vm" {
     training_bucket_name = var.training_bucket_name,
     training_package_gcs_uri = var.training_package_gcs_uri,
     model_endpoint_id = var.model_endpoint_id,
-    model_prediction_uri = var.model_prediction_uri
+    model_prediction_uri = var.model_prediction_uri,
+    model_id = var.model_id
   })
 }
 
