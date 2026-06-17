@@ -30,8 +30,24 @@ class Recommender():
     self._store = ListeningVectorStore()
     self._prediction_uri = prediction_uri or os.getenv("TASTETESTER_MODEL_PREDICTION_URI")
     self._prediction_features = self._load_prediction_features()
+    logging.debug("Recommender initialized with %d prediction features", len(self._prediction_features))
 
   def _load_prediction_features(self):
+    bucket_name = os.environ.get("TASTETESTER_TRAINING_BUCKET")
+    if bucket_name:
+      try:
+        from google.cloud import storage
+        client = storage.Client()
+        blob = client.bucket(bucket_name).blob("artifacts/prediction_features.json")
+        features = json.loads(blob.download_as_bytes())
+        local_path = Path(__file__).parent.parent / "etl" / "artifacts" / "prediction_features.json"
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(local_path, "w") as f:
+          json.dump(features, f)
+        return features
+      except Exception:
+        logging.warning("GCS fetch failed, falling back to local prediction features")
+
     path = Path(__file__).parent.parent / "etl" / "artifacts" / "prediction_features.json"
     if path.exists():
       with open(path) as f:
