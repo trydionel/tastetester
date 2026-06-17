@@ -29,6 +29,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "fastapi<0.137.0",
     "google-cloud-aiplatform>=1.157.0",
+    "google-cloud-logging>=3.11.0",
 ]
 
 [build-system]

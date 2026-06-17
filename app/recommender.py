@@ -18,6 +18,13 @@ except ImportError:
     google = None
     GoogleAuthRequest = None
 
+try:
+    import google.cloud.logging
+    client = google.cloud.logging.Client()
+    client.setup_logging(log_level=logging.DEBUG)
+except Exception:
+    logging.info("google-cloud-logging unavailable; logs go to stderr")
+
 class TrackAnalysis(BaseModel):
   details: dict[str, Any]
   matches: list[dict[str, Any]]
@@ -76,24 +83,24 @@ class Recommender():
     genres = fetch_genres(artist)
     logging.debug(f"Got genres {genres}")
 
-    vector = self._store.build_track_vector(audio_features, genres)
-    logging.debug(f"Prepared {vector} for similarity search")
+    # vector = self._store.build_track_vector(audio_features, genres)
+    # logging.debug(f"Prepared {vector} for similarity search")
 
-    matches = self._store.similar_to_vector(vector, limit=5)
-    logging.debug(f"Found most similar listening history {matches}")
+    # matches = self._store.similar_to_vector(vector, limit=5)
+    # logging.debug(f"Found most similar listening history {matches}")
 
-    logging.debug("Fetching details for similar listening history")
-    for match in matches:
-      match_details = self._store.get_track_details(match['entity_key'])
-      logging.debug(f"{match_details['artist_name']} - {match_details['track_name']} ({match_details['total_plays']} listens, {match['distance']:.2f} distance)")
+    # logging.debug("Fetching details for similar listening history")
+    # for match in matches:
+    #   match_details = self._store.get_track_details(match['entity_key'])
+    #   logging.debug(f"{match_details['artist_name']} - {match_details['track_name']} ({match_details['total_plays']} listens, {match['distance']:.2f} distance)")
 
-      match |= dict(match_details)
+    #   match |= dict(match_details)
     
     analysis = {
       "details": dict(track_details) | { 'genres': genres },
       "audio_features": audio_features,
-      "vector": vector,
-      "matches": matches
+      "vector": [], # vector,
+      "matches": [] # matches
     }
 
     analysis["expected_plays"] = self._predict_listens(analysis)
