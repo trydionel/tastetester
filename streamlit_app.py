@@ -1,5 +1,4 @@
 import streamlit as st
-from app import recommender
 from app.recommender import Recommender
 
 st.title("Taste tester")
@@ -23,5 +22,5 @@ try:
     st.subheader("Most similar listening history")
     for match in analysis.matches:
         st.write(f"{match['artist_name']} - {match['track_name']} ({match['total_plays']} listens, {match['distance']:.2f} distance)")
-except:
-    st.write("Unable to analyze song")
+except Exception as e:
+    st.error(f"Error analyzing track {track_uri}: {e}")

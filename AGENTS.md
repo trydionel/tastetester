@@ -3,7 +3,7 @@
 ## Commands
 
 ```sh
-PREFECT_API_URL=http://127.0.0.1:4200/api uv run python main.py
+PREFECT_API_URL=http://127.0.0.1:4200/api uv run python -m etl.main
 # Or with a local prefect server:
 #   uv run prefect server start --host 127.0.0.1 &; PREFECT_API_URL=... uv run python main.py
 
@@ -70,7 +70,7 @@ conn.execute(
 - `etl/common/__init__.py` — `root_path()` resolves the repo root. Use for any file path.
 - `etl/common/persistence.py` — `df_to_parquet(df, path)` and `parquet_to_df(path)` are Prefect tasks.
 - `etl/common/analysis.py` — `peak_year(ts)` computes weighted-average peak year.
-- `etl/common/vector_schemas.py` — `CONTENT_FEATURES`, `BEHAVIORAL_COLS`, and `TRACK_DETAILS_COLS` constants defining which columns go into vectors and metadata tables.
+- `etl/common/vector_schemas.py` — `CONTENT_FEATURES`, `PREDICTION_FEATURES`, `BEHAVIORAL_COLS`, and `TRACK_DETAILS_COLS` constants. `PREDICTION_FEATURES` (11 audio features) is the whitelist used by both training (`models/play_count/trainer/task.py`) and prediction (`app/recommender.py`).
 - `etl/common/vectorstore.py` — `ListeningVectorStore` class for building/querying the embedding store.
 
 ## Data sources
@@ -99,3 +99,4 @@ Raw JSON (gitignored per `.gitignore`):
 - No `tool.ruff`, `tool.pytest`, or `tool.mypy` sections in `pyproject.toml`.
 - `sqlite-vec` (v0.1.9) added as a dependency. The `vectorstore.py` uses `vec0` virtual tables and the `MATCH` operator for ANN queries.
 - `store_track_content_vectors` and `store_track_details` tasks use `cache_policy=NO_CACHE` because they hold an unpicklable SQLite connection.
+- At training time, `train_model.py` writes `etl/artifacts/prediction_features.json` — the exact column list used by the model (11 audio features + genre columns). The recommender loads this file so both sides agree on feature order. Falls back to `PREDICTION_FEATURES` only if file is missing.

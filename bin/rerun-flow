@@ -34,4 +34,4 @@ if ! lsof -i ":$PORT" &>/dev/null; then
 fi
 
 cd "$SCRIPT_DIR"
-PREFECT_API_URL="http://$HOST:$PORT/api" uv run python main.py
+PREFECT_API_URL="http://$HOST:$PORT/api" uv run python -m etl.main

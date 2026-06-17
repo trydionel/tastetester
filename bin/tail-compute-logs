@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gcloud compute ssh $(tofu -chdir=terraform output -raw compute_instance_name) --command="journalctl -u ${1:-prefect-server} -f"
