@@ -149,4 +149,4 @@ class Recommender():
     if "predictions" not in prediction or not prediction["predictions"]:
       raise RuntimeError(f"Unexpected Vertex AI response: {prediction}")
 
-    return float(prediction["predictions"][0][0])
+    return float(prediction["predictions"][0])
